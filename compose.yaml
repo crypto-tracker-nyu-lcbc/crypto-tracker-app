@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
     database:
         build:
@@ -12,3 +13,19 @@ services:
         
 volumes:
     db_data:
+=======
+services:
+    database:
+        build:
+            context: database
+            dockerfile: Dockerfile
+        container_name: database
+        image:  crypto-tracker
+        volumes:
+            - db_data:/data
+            - ./database/sample.sql:/data/sample.sql
+        command: ["tail", "-f", "/dev/null"]
+        
+volumes:
+    db_data:
+>>>>>>> 6daa86c (Add project setup)
