@@ -1,14 +1,36 @@
 services:
+    backend:
+        build:
+            context: crypto-tracker-app/flask-app
+        container_name: backend
+        ports:
+            - "5001:5001" # 5000 already occupied
+        environment:
+            - FLASK_ENV=development
+            - FLASK_APP=server.py
+        volumes:
+            - ./crypto-tracker-app/flask-app:/flask-app
+        command: ["python3", "server.py"]
+
+    frontend:
+        build:
+            context: crypto-tracker-app/react-app
+        container_name: frontend
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./crypto-tracker-app/react-app:/react-app
+            - "/react-app/node_modules"
+        command: ["npm", "start"]
+
     database:
         build:
             context: database
-            dockerfile: Dockerfile
         container_name: database
-        image:  crypto-tracker
         volumes:
             - db_data:/data
             - ./database/sample.sql:/data/sample.sql
         command: ["tail", "-f", "/dev/null"]
-        
+
 volumes:
     db_data:
