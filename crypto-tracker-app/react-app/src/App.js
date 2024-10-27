@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 function App() {
     const [currentTime, setCurrentTime] = useState(0);
     useEffect(() => {
-        fetch("http://127.0.0.1:5000/time")
+        fetch("http://127.0.0.1:5001/time")
             .then((res) => res.json())
             .then((data) => {
                 setCurrentTime(data.time);
