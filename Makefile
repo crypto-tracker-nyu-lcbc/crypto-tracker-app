@@ -15,7 +15,7 @@ down:
 	docker-compose -f $(COMPOSE_FILE) down
 
 build:
-	docker compose -f $(COMPOSE_FILE) build
+	docker-compose -f $(COMPOSE_FILE) build
 
 clean:
 	docker system prune -a --volumes
