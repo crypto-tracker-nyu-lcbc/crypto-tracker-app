@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -6,7 +6,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 
 function SearchBar() {
     const [data, setData] = useState([]);
-    const [query, setQuery] = useState("");
+    const [query, setQuery] = useState(null);
     const [selectedId, setSelectedId] = useState(null); // Track the selected ID
     const navigate = useNavigate();
 
@@ -30,27 +30,39 @@ function SearchBar() {
 
     // Handle search
     const handleSearch = () => {
-        const finalQuery = selectedId ? selectedId : query.trim();
-        if (finalQuery) {
-            navigate(`/search?query=${encodeURIComponent(finalQuery)}`); // Redirect using the final query
+        if (query && query.trim().length > 0) {
+            const finalQuery = selectedId ? selectedId : query.trim();
+            if (finalQuery) {
+                navigate(`/search?query=${encodeURIComponent(finalQuery)}`); // Redirect using the final query
+            }
         }
     };
 
     // Extract options for Autocomplete
-    const options = data.map((item) => ({ id: item.id, name: item.name }));
+    const options = useMemo(
+        () => data.map((item) => ({ id: item.id, name: item.name })),
+        [data]
+    );
 
     return (
         <div
             style={{
-                marginBottom: "16px",
                 display: "flex",
                 justifyContent: "center",
             }}
         >
             <Autocomplete
                 freeSolo
+                value={query}
                 options={options}
-                getOptionLabel={(option) => option.name} // Show name in the dropdown
+                getOptionLabel={(option) => {
+                    // Value selected with enter, directly from input
+                    if (typeof option === "string") {
+                        return option;
+                    }
+                    // Regular option with an object
+                    return option.name;
+                }}
                 disableClearable
                 onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -58,14 +70,19 @@ function SearchBar() {
                     }
                 }}
                 onChange={(event, newValue) => {
-                    if (newValue === "" || !newValue) {
-                        setQuery("");
-                        setSelectedId(null); // Reset ID if no selection
-                    } else {
-                        setQuery(newValue.name); // Update query with the selected name
-                        setSelectedId(newValue.id); // Update selected ID
+                    if (typeof newValue === "string") {
+                        setQuery(newValue);
+                        setSelectedId(null);
+                    } else if (newValue) {
+                        setQuery(newValue.name); // Set query with the selected name
+                        setSelectedId(newValue.id); // Set the selected ID
                     }
                 }}
+                renderOption={(props, option) => (
+                    <li {...props} key={option.id || option.name}>
+                        {option.name}
+                    </li>
+                )}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -79,6 +96,7 @@ function SearchBar() {
                     />
                 )}
             />
+
             <Button variant="contained" onClick={handleSearch} sx={{ m: 2 }}>
                 Search
             </Button>
