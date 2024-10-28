@@ -5,10 +5,12 @@ import SearchResult from "./SearchResult";
 
 function App() {
     return (
-        <Routes>
-            <Route path="/search" element={<SearchResult />} />
-            <Route path="/" element={<SearchBar />} />
-        </Routes>
+        <div>
+            <Routes>
+                <Route path="/search" element={<SearchResult />} />
+                <Route path="/" element={<SearchBar />} />
+            </Routes>
+        </div>
     );
 }
 
