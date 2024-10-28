@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import SearchBar from "./SearchBar";
+import SearchResult from "./SearchResult";
 
 function App() {
-    const [currentTime, setCurrentTime] = useState(0);
-    useEffect(() => {
-        fetch("http://127.0.0.1:5001/time")
-            .then((res) => res.json())
-            .then((data) => {
-                setCurrentTime(data.time);
-                console.log(data.time);
-            });
-    }, []);
-    return <div>Fetched current time from API: {currentTime}</div>;
+    return (
+        <Routes>
+            <Route path="/search" element={<SearchResult />} />
+            <Route path="/" element={<SearchBar />} />
+        </Routes>
+    );
 }
 
 export default App;

@@ -34,6 +34,14 @@ def hello():
 
     return response.text
 
+
+@app.route("/list")
+def list():
+    response = requests.get(f"https://api.coingecko.com/api/v3/coins/list",
+                            headers={"accept": "application/json"})
+    coin_list = [coin for coin in response.json()]
+    return coin_list
+
 @app.route("/price")
 def price():
     """Search for name/symbol of coin to view price/market data"""
@@ -57,7 +65,7 @@ def price():
                             },
                             headers={"accept": "application/json"})
 
-    return response.text
+    return response.json()
 
 
 @app.route("/trends")
