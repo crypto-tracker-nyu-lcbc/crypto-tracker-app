@@ -37,6 +37,8 @@ def hello():
 
 @app.route("/list")
 def list():
+    """Get a list of supported coins on CoinGecko with coins id, name and symbol"""
+    # How to use right now: localhost:5001/list
     response = requests.get(f"https://api.coingecko.com/api/v3/coins/list",
                             headers={"accept": "application/json"})
     coin_list = [coin for coin in response.json()]
