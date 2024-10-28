@@ -6,7 +6,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 
 function SearchBar() {
     const [data, setData] = useState([]);
-    const [query, setQuery] = useState(null);
+    const [query, setQuery] = useState(""); // Controls input text
     const [selectedId, setSelectedId] = useState(null); // Track the selected ID
     const navigate = useNavigate();
 
@@ -32,7 +32,7 @@ function SearchBar() {
     const handleSearch = () => {
         const finalQuery = selectedId ? selectedId : query.trim();
         if (finalQuery) {
-            navigate(`/search?query=${encodeURIComponent(finalQuery)}`); // Redirect using the final query
+            navigate(`/search?query=${encodeURIComponent(finalQuery)}`);
         }
     };
 
@@ -43,28 +43,22 @@ function SearchBar() {
         <div style={{ display: "flex", justifyContent: "center" }}>
             <Autocomplete
                 freeSolo
-                value={query}
+                inputValue={query} // Controls the text input value
                 options={options}
-                getOptionLabel={(option) => {
-                    if (typeof option === "string") {
-                        return option;
-                    }
-                    return option.name;
-                }}
+                getOptionLabel={(option) => option.name || ""}
                 disableClearable
-                onKeyDown={(event) => {
-                    if (event.key === "Enter" && query) {
-                        handleSearch();
-                    }
+                onInputChange={(event, newInputValue) => {
+                    setQuery(newInputValue); // Update query text
+                    setSelectedId(null); // Reset selected ID when typing
                 }}
                 onChange={(event, newValue) => {
                     if (newValue) {
-                        setQuery(newValue.name);
-                        setSelectedId(newValue.id);
+                        setQuery(newValue.name); // Set query to selected option's name
+                        setSelectedId(newValue.id); // Track the selected option's ID
                     }
                 }}
                 renderOption={(props, option) => (
-                    <li {...props} key={option.id || option.name}>
+                    <li {...props} key={option.id}>
                         {option.name}
                     </li>
                 )}
@@ -75,10 +69,10 @@ function SearchBar() {
                         placeholder="Type to search"
                         sx={{ m: 2, width: "500px" }}
                         autoFocus
-                        onChange={(e) => {
-                            var value = e.target.value;
-                            setQuery(value);
-                            setSelectedId(null);
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" && query) {
+                                handleSearch();
+                            }
                         }}
                     />
                 )}
