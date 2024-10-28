@@ -70,8 +70,8 @@ function SearchBar() {
                         sx={{ m: 2, width: "500px" }}
                         autoFocus
                         onKeyDown={(event) => {
-                            if (event.key === "Enter" && query) {
-                                handleSearch();
+                            if (event.key === "Enter" && query.trim()) {
+                                handleSearch(); // Check if query has meaningful content
                             }
                         }}
                     />
