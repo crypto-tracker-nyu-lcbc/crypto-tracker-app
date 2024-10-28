@@ -1,10 +1,9 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /react-app
 
-COPY package.json ./
-COPY package-lock.json ./
-RUN npm install --silent
-RUN npm install react-scripts@latest -g --silent
+COPY public/ /react-app/public
+COPY package.json /react-app
+COPY package-lock.json /react-app
 
-COPY . .
+RUN npm install

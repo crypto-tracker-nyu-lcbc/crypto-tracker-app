@@ -19,8 +19,7 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./crypto-tracker-app/react-app:/react-app
-            - "/react-app/node_modules"
+            - ./crypto-tracker-app/react-app/src:/react-app/src
         command: ["npm", "start"]
 
     database:
