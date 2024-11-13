@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "./App.css";
 import { useNavigate } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -40,9 +41,14 @@ function SearchBar() {
     const options = data.map((item) => ({ id: item.id, name: item.name }));
 
     return (
-        <div style={{ display: "flex", justifyContent: "center" }}>
+        <div id="SearchBar">
             <Autocomplete
                 freeSolo
+                sx={{
+                    m: 2,
+                    width: "80%",
+                    height: "40px",
+                }}
                 inputValue={query} // Controls the text input value
                 options={options}
                 getOptionLabel={(option) => option.name || ""}
@@ -66,9 +72,18 @@ function SearchBar() {
                     <TextField
                         {...params}
                         variant="standard"
+                        color="secondary"
                         placeholder="Type to search"
-                        sx={{ m: 2, width: "500px" }}
-                        autoFocus
+                        sx={{
+                            m: 2,
+                            width: "100%",
+                            input: {
+                                color: "white",
+                                fontFamily: "Space Grotesk",
+                                fontWeight: "300",
+                            },
+                        }}
+                        focused
                         onKeyDown={(event) => {
                             if (event.key === "Enter" && query.trim()) {
                                 handleSearch(); // Check if query has meaningful content
@@ -78,7 +93,13 @@ function SearchBar() {
                 )}
             />
 
-            <Button variant="contained" onClick={handleSearch} sx={{ m: 2 }}>
+            <Button
+                id="SearchBarButton"
+                variant="contained"
+                onClick={handleSearch}
+                color="secondary"
+                sx={{ width: "20%", fontFamily: "Space Grotesk" }}
+            >
                 Search
             </Button>
         </div>

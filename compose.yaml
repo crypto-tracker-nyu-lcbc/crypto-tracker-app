@@ -20,6 +20,7 @@ services:
             - "3000:3000"
         volumes:
             - ./crypto-tracker-app/react-app/src:/react-app/src
+            - ./crypto-tracker-app/react-app/public:/react-app/public
         command: ["npm", "start"]
 
     database:
