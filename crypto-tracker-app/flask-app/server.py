@@ -34,6 +34,33 @@ def hello():
 
     return response.text
 
+@app.route("/top100")
+def top100():
+    # How to use right now: localhost:5001/top100
+    response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
+                            params={
+                                "vs_currency":"usd",
+                                "order": "market_cap_desc",
+                                # "per_page": 100 # Default = 100 
+                                # "page": 1
+                                "x_cg_demo_api_key":COIN_GECKO_KEY
+                            },
+                            headers={"accept": "application/json"})
+    top100 = []
+    for item in response.json():
+        top100.append({
+            "id": item.get("id"),
+            "rank": item.get("market_cap_rank"),
+            "coin": {
+                "name": item.get("name"),
+                "image": item.get("image"),
+                "symbol": item.get("symbol"),
+            },
+            "current_price": item.get("current_price"),
+            "market_cap": item.get("market_cap"),
+            "price_change_percentage_24h": item.get("price_change_percentage_24h"),
+        })
+    return top100
 
 @app.route("/list")
 def list():
