@@ -1,7 +1,7 @@
 """Main application"""
 # TODO: split up?
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import time
 from flask_cors import CORS
 import requests
@@ -131,32 +131,41 @@ def historical_price_chart():
     # TODO: cryptocurrency id validation via database table
 
     id = request.args.get('id')
+    num_days = request.args.get('days', 7)  # Default to 7 days if 'days' parameter is not provided
+    # Validate or parse days, and ensure it’s a positive integer
     try:
-        num_days = int(request.args.get('days'))
+        num_days = int(num_days)
+        if num_days <= 0:
+            raise ValueError
     except ValueError:
-        num_days = 7 # Default 7 days
+        return jsonify({"error": "The 'days' parameter must be a positive integer"}), 400
     today_time = datetime.date.today()
     from_time = today_time - datetime.timedelta(days=num_days)
     today_UNIX = time.mktime(today_time.timetuple())
     from_UNIX = time.mktime(from_time.timetuple())
-    response = requests.get(f"https://api.coingecko.com/api/v3/coins/{id}/market_chart/range",
-                        params={
-                            "vs_currency":"usd",
-                            "from":from_UNIX,
-                            "to":today_UNIX,
-                            "x_cg_demo_api_key":COIN_GECKO_KEY
-                        },
-                        headers={"accept": "application/json"})
-    if response.status_code != 200:
-        return "Error: Unable to fetch data", 500
+    # Query CoinGecko API
+    try:
+        response = requests.get(
+            f"https://api.coingecko.com/api/v3/coins/{id}/market_chart/range",
+            params={
+                "vs_currency": "usd",
+                "from": from_UNIX,
+                "to": today_UNIX,
+                "x_cg_demo_api_key": COIN_GECKO_KEY
+            },
+            headers={"accept": "application/json"}
+        )
+        response.raise_for_status()
+    except requests.RequestException as e:
+        return jsonify({"error": "Unable to fetch data from CoinGecko"}), 500
 
-    chart_data = []
-    for price in response.json().get("prices"):
-        chart_data.append({
-            "x": price[0],
-            "y": price[1],
-        })
-    return chart_data
+    try:
+        prices = response.json().get("prices", [])
+        chart_data = [{"x": price[0], "y": price[1]} for price in prices]
+    except (ValueError, KeyError) as e:
+        return jsonify({"error": "Error processing data"}), 500
+    
+    return jsonify(chart_data), 200
 
 @app.route("/news")
 def news():

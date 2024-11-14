@@ -1,12 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import {
-    select,
-    line,
-    curveCardinal,
-    scaleLinear,
-    axisBottom,
-    axisLeft,
-} from "d3";
+import { select, line, curveCardinal, scaleLinear } from "d3";
 
 function LineChart({ id, days, width, height, color }) {
     const [data, setData] = useState([]);
@@ -19,9 +12,17 @@ function LineChart({ id, days, width, height, color }) {
                 `http://localhost:5001/historical-price-chart?id=${id}&days=${days}`
             );
             const result = await response.json();
-            setData(result);
+
+            // Ensure the result is an array before setting data
+            if (Array.isArray(result)) {
+                setData(result);
+            } else {
+                console.error("Unexpected data format:", result);
+                setData([]); // Fallback to empty array
+            }
         } catch (error) {
             console.error("Error fetching data:", error);
+            setData([]); // Set data to empty array on error
         }
     };
 
@@ -31,7 +32,8 @@ function LineChart({ id, days, width, height, color }) {
     }, []); // Empty dependency array to fetch only once when the component mounts
 
     useEffect(() => {
-        if (data.length === 0) return; // Exit if data is not yet available
+        // Check if data is an array and contains elements before rendering
+        if (!Array.isArray(data) || data.length === 0) return;
 
         // Clear any previous SVG elements
         select(svgRef.current).selectAll("*").remove();
