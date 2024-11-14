@@ -9,7 +9,7 @@ import os
 import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3000"])
 
 @app.route("/time")
 def getTime():
@@ -35,20 +35,20 @@ def hello():
     return response.text
 
 @app.route("/top100")
-def top100():
-    # How to use right now: localhost:5001/top100
+def top10():
+    # How to use right now: localhost:5001/top10
     response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
                             params={
                                 "vs_currency":"usd",
                                 "order": "market_cap_desc",
-                                # "per_page": 100 # Default = 100 
-                                # "page": 1
+                                "per_page": 10,
+                                "page": 1,
                                 "x_cg_demo_api_key":COIN_GECKO_KEY
                             },
                             headers={"accept": "application/json"})
-    top100 = []
+    top10 = []
     for item in response.json():
-        top100.append({
+        top10.append({
             "id": item.get("id"),
             "rank": item.get("market_cap_rank"),
             "coin": {
@@ -60,7 +60,7 @@ def top100():
             "market_cap": item.get("market_cap"),
             "price_change_percentage_24h": item.get("price_change_percentage_24h"),
         })
-    return top100
+    return top10
 
 @app.route("/list")
 def list():
@@ -121,27 +121,42 @@ def trends():
     return response.text
 
 
-@app.route("/historical")
-def historical():
+@app.route('/historical-price-chart', methods=['GET'])
+def historical_price_chart():
     """Query historical data api"""
 
-    # How to use right now: localhost:5001/historical?id=<VALID COIN ID>
+    # How to use right now: localhost:5001/historical-price-chart?id=<VALID COIN ID>&days=<# OF DAYS>
 
     # TODO: input for from-to dates (datetime in s?)
     # TODO: cryptocurrency id validation via database table
 
     id = request.args.get('id')
-    
+    try:
+        num_days = int(request.args.get('days'))
+    except ValueError:
+        num_days = 7 # Default 7 days
+    today_time = datetime.date.today()
+    from_time = today_time - datetime.timedelta(days=num_days)
+    today_UNIX = time.mktime(today_time.timetuple())
+    from_UNIX = time.mktime(from_time.timetuple())
     response = requests.get(f"https://api.coingecko.com/api/v3/coins/{id}/market_chart/range",
-                            params={
-                                "vs_currency":"usd",
-                                "from":1711929600,
-                                "to":1712275200,
-                                "x_cg_demo_api_key":COIN_GECKO_KEY
-                            },
-                            headers={"accept": "application/json"})
+                        params={
+                            "vs_currency":"usd",
+                            "from":from_UNIX,
+                            "to":today_UNIX,
+                            "x_cg_demo_api_key":COIN_GECKO_KEY
+                        },
+                        headers={"accept": "application/json"})
+    if response.status_code != 200:
+        return "Error: Unable to fetch data", 500
 
-    return response.text
+    chart_data = []
+    for price in response.json().get("prices"):
+        chart_data.append({
+            "x": price[0],
+            "y": price[1],
+        })
+    return chart_data
 
 @app.route("/news")
 def news():

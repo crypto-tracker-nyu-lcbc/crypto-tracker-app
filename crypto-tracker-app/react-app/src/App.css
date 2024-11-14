@@ -25,6 +25,9 @@ body {
     font-family: "Jockey One" sans-serif;
     font-weight: 700;
 }
+.MuiTablePagination-toolbar {
+    color: white;
+}
 .App {
     text-align: center;
 }
