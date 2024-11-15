@@ -76,7 +76,7 @@ const columns = [
     },
     {
         field: "graph",
-        headerName: "24H Graph",
+        headerName: "7-Day Trend",
         headerClassName: "cointable-header",
         type: "number",
         width: 300,
@@ -84,8 +84,10 @@ const columns = [
             const change_percentage = parseFloat(
                 params.row.price_change_percentage_24h
             );
+            // console.log(params.row.sparkline);
             return (
                 <LineChart
+                    data={params.row.sparkline}
                     id={params.row.id}
                     days="1"
                     width={graphWidth}
@@ -112,7 +114,7 @@ export default function CoinTable() {
     // Fetch data from the API
     const fetchData = async () => {
         try {
-            const response = await fetch("http://localhost:5001/top100");
+            const response = await fetch("http://localhost:5001/cointable");
             if (!response.ok) throw new Error("response error");
             const result = await response.json();
             setData(result);

@@ -1,37 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import { select, line, curveCardinal, scaleLinear } from "d3";
 
-function LineChart({ id, days, width, height, color }) {
+function LineChart(props) {
     const [data, setData] = useState([]);
     const svgRef = useRef();
 
-    // Fetch data from the API (only on component mount)
-    const fetchData = async () => {
-        try {
-            const response = await fetch(
-                `http://localhost:5001/historical-price-chart?id=${id}&days=${days}`
-            );
-            const result = await response.json();
-
-            // Ensure the result is an array before setting data
-            if (Array.isArray(result)) {
-                setData(result);
-            } else {
-                console.error("Unexpected data format:", result);
-                setData([]); // Fallback to empty array
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            setData([]); // Set data to empty array on error
-        }
-    };
-
-    // Fetch data only once on component mount
     useEffect(() => {
-        fetchData();
-    }, []); // Empty dependency array to fetch only once when the component mounts
-
-    useEffect(() => {
+        setData(props.data);
+        console.log(props.data);
         // Check if data is an array and contains elements before rendering
         if (!Array.isArray(data) || data.length === 0) return;
 
@@ -40,13 +16,13 @@ function LineChart({ id, days, width, height, color }) {
 
         // Set up SVG dimensions
         const svg = select(svgRef.current)
-            .attr("width", width)
-            .attr("height", height);
+            .attr("width", props.width)
+            .attr("height", props.height);
 
         // Define margin and adjusted dimensions
         const margin = { top: 5, right: 5, bottom: 5, left: 5 };
-        const adjustedWidth = width - margin.left - margin.right;
-        const adjustedHeight = height - margin.top - margin.bottom;
+        const adjustedWidth = props.width - margin.left - margin.right;
+        const adjustedHeight = props.height - margin.top - margin.bottom;
 
         // Append a group element for the chart
         const chartGroup = svg
@@ -78,8 +54,8 @@ function LineChart({ id, days, width, height, color }) {
             .attr("class", "line")
             .attr("d", myLine)
             .attr("fill", "none")
-            .attr("stroke", color);
-    }, [data, width, height, color]); // Re-run only if these dependencies change
+            .attr("stroke", props.color);
+    }, [data, props.width, props.height, props.color]); // Re-run only if these dependencies change
 
     return <svg ref={svgRef}></svg>;
 }

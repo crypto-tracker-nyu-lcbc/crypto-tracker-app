@@ -34,6 +34,39 @@ def hello():
 
     return response.text
 
+@app.route("/cointable")
+def coinTable():
+    # How to use right now: localhost:5001/cointable
+    response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
+                           params={
+                                "x_cg_demo_api_key":COIN_GECKO_KEY,
+                                "vs_currency":"usd",
+                                "order": "market_cap_desc",
+                                "per_page": 10,
+                                "page": 1,
+                                # include sparkline 7 days data
+                                "sparkline": "true",
+                                "price_change_percentage": "24h",
+                                "locale": "en",
+                           }, headers={"accept": "application/json"})
+    
+    coinTableData = []
+    for item in response.json():
+        coinTableData.append({
+            "id": item.get("id"),
+            "rank": item.get("market_cap_rank"),
+            "coin": {
+                "name": item.get("name"),
+                "image": item.get("image"),
+                "symbol": item.get("symbol"),
+            },
+            "current_price": item.get("current_price"),
+            "market_cap": item.get("market_cap"),
+            "price_change_percentage_24h": item.get("price_change_percentage_24h"),
+            "sparkline": [{"x": i + 1, "y": price} for i, price in enumerate(item.get("sparkline_in_7d").get("price"))] ,
+        })
+    return coinTableData
+
 @app.route("/top100")
 def top10():
     # How to use right now: localhost:5001/top10
@@ -166,6 +199,45 @@ def historical_price_chart():
         return jsonify({"error": "Error processing data"}), 500
     
     return jsonify(chart_data), 200
+
+# How to use right now: localhost:5001/coin-data?id=<VALID COIN ID>
+@app.route('/coin-data', methods=['GET'])
+def coinData():
+    id = request.args.get('id')
+        # Query CoinGecko API
+    try:
+        response = requests.get(
+            f"https://api.coingecko.com/api/v3/coins/{id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false",
+            params={
+                "x_cg_demo_api_key": COIN_GECKO_KEY
+            },
+            headers={"accept": "application/json"}
+        )
+        response = response.json()
+        data = {
+            "id": response.get("id"),
+            "name": response.get("name"),
+            "symbol": response.get("symbol"),
+            "description": response.get("description").get("en"),
+            "image": response.get("image"),
+            "current_price": response.get("market_data").get("current_price").get("usd"),
+            "market_cap_rank": response.get("market_data").get("market_cap_rank"),
+            "market_cap": response.get("market_data").get("market_cap").get("usd"),
+            "price_change_24h": response.get("market_data").get("price_change_24h"),
+            "price_change_percentage_24h": response.get("market_data").get("price_change_percentage_24h"),
+            "price_change_percentage_7d": response.get("market_data").get("price_change_percentage_7d"),
+            "price_change_percentage_14d": response.get("market_data").get("price_change_percentage_14d"),
+            "price_change_percentage_30d": response.get("market_data").get("price_change_percentage_30d"),
+            "price_change_percentage_1y": response.get("market_data").get("price_change_percentage_1y"),
+            "market_cap_change_24h": response.get("market_data").get("market_cap_change_24h"),
+            "market_cap_change_percentage_24h": response.get("market_data").get("market_cap_change_percentage_24h"),
+        }
+
+        return data
+    except requests.RequestException as e:
+        return jsonify({"error": "Unable to fetch data from CoinGecko"}), 500
+    
+ 
 
 @app.route("/news")
 def news():
