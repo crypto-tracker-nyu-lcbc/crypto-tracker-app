@@ -40,13 +40,45 @@ const columns = [
     },
     {
         field: "current_price",
-        headerName: "Current Price",
+        valueGetter: (value) => {
+            var num_str = value.toString();
+            var whole = num_str
+                .split(".")[0]
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            var decimal = num_str.split(".")[1]
+                ? "." + num_str.split(".")[1]
+                : "";
+            return "$ " + whole + decimal;
+        },
+        headerName: "Price",
         headerClassName: "cointable-header",
         type: "number",
         flex: 1,
     },
     {
         field: "market_cap",
+        valueGetter: (value) => {
+            if (value > 1000000000) {
+                value /= 1000000000;
+                var val_str = value
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return "$ " + val_str + " B";
+            } else if (value > 1000000) {
+                value /= 1000000;
+                var val_str = value
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return "$ " + val_str + " M";
+            } else {
+                var val_str = value
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return "$ " + val_str;
+            }
+        },
         headerName: "Market Cap",
         headerClassName: "cointable-header",
         type: "number",
@@ -166,10 +198,10 @@ export default function CoinTable() {
             <DataGrid
                 rows={rows}
                 columns={columns}
-                pagination
-                paginationMode="client"
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
+                // pagination
+                // paginationMode="client"
+                // paginationModel={paginationModel}
+                // onPaginationModelChange={setPaginationModel}
                 // pageSizeOptions={[10]}
                 rowHeight={rowHeight}
                 onRowClick={handleOnRowClick}
