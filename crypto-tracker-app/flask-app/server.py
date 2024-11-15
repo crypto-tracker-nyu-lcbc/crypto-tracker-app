@@ -6,7 +6,7 @@ import time
 from flask_cors import CORS
 import requests
 import os
-import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
@@ -149,10 +149,10 @@ def historical_price_chart():
             raise ValueError
     except ValueError:
         return jsonify({"error": "The 'days' parameter must be a positive integer"}), 400
-    today_time = datetime.date.today()
-    from_time = today_time - datetime.timedelta(days=num_days)
-    today_UNIX = time.mktime(today_time.timetuple())
-    from_UNIX = time.mktime(from_time.timetuple())
+    today_time = datetime.now()
+    today_UNIX = int(today_time.timestamp()) 
+    from_time = today_time - timedelta(hours=(24 * num_days))
+    from_UNIX = int(from_time.timestamp()) 
     # Query CoinGecko API
     try:
         response = requests.get(

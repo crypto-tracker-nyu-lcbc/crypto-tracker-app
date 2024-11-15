@@ -6,7 +6,16 @@ body {
     height: 100%;
     margin: 0;
 }
-
+.cardContainer {
+    --Grid-rowSpacing: 1vw;
+    --Grid-columnSpacing: 1vw;
+}
+.SearchResult {
+    width: 90%;
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 2%;
+}
 #SearchBar {
     display: flex;
     margin: 1% 25% 0% 25%;
@@ -25,9 +34,9 @@ body {
     font-family: "Jockey One" sans-serif;
     font-weight: 700;
 }
-.MuiTablePagination-toolbar {
+/* .MuiTablePagination-toolbar {
     color: white;
-}
+} */
 .App {
     text-align: center;
 }

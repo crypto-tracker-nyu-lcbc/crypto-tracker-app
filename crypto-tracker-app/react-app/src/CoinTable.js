@@ -5,6 +5,7 @@ import Avatar from "@mui/material/Avatar";
 import { CardHeader, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import LineChart from "./LineChart";
+import { ArrowDropDown, ArrowDropUp } from "@mui/icons-material";
 
 const graphWidth = 300;
 const rowHeight = 80;
@@ -91,6 +92,7 @@ const columns = [
         type: "number",
         flex: 1,
         renderCell: (params) => {
+            // console.log(params);
             const change_percentage = parseFloat(params.value);
             return (
                 <Typography
@@ -100,7 +102,13 @@ const columns = [
                     fontSize="inherit"
                     fontWeight="700"
                     lineHeight="inherit"
+                    style={{ display: "flex", alignItems: "center" }}
                 >
+                    {change_percentage > 0 ? (
+                        <ArrowDropUp />
+                    ) : (
+                        <ArrowDropDown />
+                    )}
                     {change_percentage} %
                 </Typography>
             );
@@ -122,7 +130,13 @@ const columns = [
                     fontSize="inherit"
                     fontWeight="700"
                     lineHeight="inherit"
+                    style={{ display: "flex", alignItems: "center" }}
                 >
+                    {change_percentage > 0 ? (
+                        <ArrowDropUp />
+                    ) : (
+                        <ArrowDropDown />
+                    )}{" "}
                     {change_percentage} %
                 </Typography>
             );

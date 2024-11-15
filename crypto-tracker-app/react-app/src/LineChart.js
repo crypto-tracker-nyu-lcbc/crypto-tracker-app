@@ -7,7 +7,6 @@ function LineChart(props) {
 
     useEffect(() => {
         setData(props.data);
-        console.log(props.data);
         // Check if data is an array and contains elements before rendering
         if (!Array.isArray(data) || data.length === 0) return;
 
@@ -20,7 +19,7 @@ function LineChart(props) {
             .attr("height", props.height);
 
         // Define margin and adjusted dimensions
-        const margin = { top: 5, right: 5, bottom: 5, left: 5 };
+        const margin = { top: 10, right: 5, bottom: 10, left: 20 };
         const adjustedWidth = props.width - margin.left - margin.right;
         const adjustedHeight = props.height - margin.top - margin.bottom;
 
