@@ -46,8 +46,15 @@ const columns = [
         flex: 1,
     },
     {
+        field: "market_cap",
+        headerName: "Market Cap",
+        headerClassName: "cointable-header",
+        type: "number",
+        flex: 1,
+    },
+    {
         field: "price_change_percentage_24h",
-        headerName: "24H Change %",
+        headerName: "24-Hour Change",
         headerClassName: "cointable-header",
         type: "number",
         flex: 1,
@@ -68,11 +75,26 @@ const columns = [
         },
     },
     {
-        field: "market_cap",
-        headerName: "Market Cap",
+        field: "price_change_percentage_7d",
+        headerName: "7-Day Change",
         headerClassName: "cointable-header",
         type: "number",
         flex: 1,
+        renderCell: (params) => {
+            const change_percentage = parseFloat(params.value);
+            return (
+                <Typography
+                    color={
+                        change_percentage < 0 ? "error.light" : "success.light"
+                    }
+                    fontSize="inherit"
+                    fontWeight="700"
+                    lineHeight="inherit"
+                >
+                    {change_percentage} %
+                </Typography>
+            );
+        },
     },
     {
         field: "graph",
@@ -82,7 +104,7 @@ const columns = [
         width: 300,
         renderCell: (params) => {
             const change_percentage = parseFloat(
-                params.row.price_change_percentage_24h
+                params.row.price_change_percentage_7d
             );
             // console.log(params.row.sparkline);
             return (
@@ -102,7 +124,7 @@ const columns = [
 export default function CoinTable() {
     const [data, setData] = useState([]);
     const [paginationModel, setPaginationModel] = useState({
-        pageSize: 10,
+        pageSize: 100,
         page: 0,
     });
     const navigate = useNavigate();
@@ -148,7 +170,7 @@ export default function CoinTable() {
                 paginationMode="client"
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[10]}
+                // pageSizeOptions={[10]}
                 rowHeight={rowHeight}
                 onRowClick={handleOnRowClick}
                 disableRowSelectionOnClick

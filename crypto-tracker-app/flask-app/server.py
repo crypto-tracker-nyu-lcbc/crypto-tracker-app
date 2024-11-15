@@ -42,7 +42,7 @@ def coinTable():
                                 "x_cg_demo_api_key":COIN_GECKO_KEY,
                                 "vs_currency":"usd",
                                 "order": "market_cap_desc",
-                                "per_page": 10,
+                                "per_page": 100,
                                 "page": 1,
                                 # include sparkline 7 days data
                                 "sparkline": "true",
@@ -52,6 +52,8 @@ def coinTable():
     
     coinTableData = []
     for item in response.json():
+        price_7days = item.get("sparkline_in_7d").get("price")
+        price_change_7days = (price_7days[-1] - price_7days[0]) / price_7days[0]
         coinTableData.append({
             "id": item.get("id"),
             "rank": item.get("market_cap_rank"),
@@ -60,40 +62,15 @@ def coinTable():
                 "image": item.get("image"),
                 "symbol": item.get("symbol"),
             },
+            # "high_24h": item.get("high")
             "current_price": item.get("current_price"),
             "market_cap": item.get("market_cap"),
+            "market_cap_change_percentage_24h": item.get("market_cap_change_percentage_24h"),
             "price_change_percentage_24h": item.get("price_change_percentage_24h"),
-            "sparkline": [{"x": i + 1, "y": price} for i, price in enumerate(item.get("sparkline_in_7d").get("price"))] ,
+            "price_change_percentage_7d": rf"{price_change_7days * 100:.5f}%",
+            "sparkline": [{"x": i + 1, "y": price} for i, price in enumerate(price_7days)] ,
         })
     return coinTableData
-
-@app.route("/top100")
-def top10():
-    # How to use right now: localhost:5001/top10
-    response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
-                            params={
-                                "vs_currency":"usd",
-                                "order": "market_cap_desc",
-                                "per_page": 10,
-                                "page": 1,
-                                "x_cg_demo_api_key":COIN_GECKO_KEY
-                            },
-                            headers={"accept": "application/json"})
-    top10 = []
-    for item in response.json():
-        top10.append({
-            "id": item.get("id"),
-            "rank": item.get("market_cap_rank"),
-            "coin": {
-                "name": item.get("name"),
-                "image": item.get("image"),
-                "symbol": item.get("symbol"),
-            },
-            "current_price": item.get("current_price"),
-            "market_cap": item.get("market_cap"),
-            "price_change_percentage_24h": item.get("price_change_percentage_24h"),
-        })
-    return top10
 
 @app.route("/list")
 def list():
