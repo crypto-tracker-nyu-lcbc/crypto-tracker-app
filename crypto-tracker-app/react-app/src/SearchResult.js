@@ -2,40 +2,31 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import CoinCard from "./CoinCard";
 import LineChartDetail from "./LineChartDetail";
-import { Grid2 as Grid, Card, CardHeader } from "@mui/material";
+import { Grid2 as Grid, Card } from "@mui/material";
 import LineChartToggle from "./LineChartToggle";
 function SearchResult() {
-    const [searchResults, setSearchResults] = useState([]);
-    const [error, setError] = useState(null);
+    const [windowSize, setWindowSize] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight,
+    });
     const location = useLocation();
     const query = new URLSearchParams(location.search).get("query");
     const [id, setId] = useState(query);
     useEffect(() => {
-        const search = async () => {
-            try {
-                const response = await fetch(
-                    `http://localhost:5001/price?search=${query}`
-                );
-
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                if (data.length === 0) {
-                    setSearchResults("No results found");
-                } else {
-                    setSearchResults(JSON.stringify(data));
-                }
-            } catch (error) {
-                setError(error.message || "Something went wrong");
-            }
+        const handleResize = () => {
+            setWindowSize({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
         };
+        window.addEventListener("resize", handleResize);
 
         if (query) {
             setId(query);
-            search();
         }
+
+        // Cleanup the event listener on unmount
+        return () => window.removeEventListener("resize", handleResize);
     }, [query]);
 
     return (
@@ -43,7 +34,6 @@ function SearchResult() {
             <Grid spacing={2} container className="card-container">
                 <CoinCard item id={id} />
                 <Card
-                    item
                     style={{
                         flexGrow: 1,
                         display: "flex",
@@ -56,13 +46,16 @@ function SearchResult() {
                     <LineChartDetail
                         id={id}
                         days="1"
-                        width={700}
+                        width={
+                            windowSize.width < "570"
+                                ? windowSize.width * 0.7
+                                : windowSize.width * 0.5
+                        }
                         height={300}
-                        color={"red"}
                     />
                 </Card>
             </Grid>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {/* {error && <p style={{ color: "red" }}>{error}</p>} */}
             {/* <div>
                 <p>{searchResults}</p>
             </div> */}

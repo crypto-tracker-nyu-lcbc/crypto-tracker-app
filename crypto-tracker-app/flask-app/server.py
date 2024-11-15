@@ -51,12 +51,12 @@ def coinTable():
                            }, headers={"accept": "application/json"})
     
     coinTableData = []
-    for item in response.json():
+    for i, item in enumerate(response.json()):
         price_7days = item.get("sparkline_in_7d").get("price")
         price_change_7days = (price_7days[-1] - price_7days[0]) / price_7days[0]
         coinTableData.append({
             "id": item.get("id"),
-            "rank": item.get("market_cap_rank"),
+            "rank": i + 1,
             "coin": {
                 "name": item.get("name"),
                 "image": item.get("image"),

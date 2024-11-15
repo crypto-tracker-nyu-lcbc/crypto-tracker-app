@@ -1,12 +1,11 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { select, line, curveCardinal, scaleLinear } from "d3";
 
 function LineChart(props) {
-    const [data, setData] = useState([]);
     const svgRef = useRef();
 
     useEffect(() => {
-        setData(props.data);
+        const data = props.data || [];
         // Check if data is an array and contains elements before rendering
         if (!Array.isArray(data) || data.length === 0) return;
 
@@ -54,7 +53,7 @@ function LineChart(props) {
             .attr("d", myLine)
             .attr("fill", "none")
             .attr("stroke", props.color);
-    }, [data, props.width, props.height, props.color]); // Re-run only if these dependencies change
+    }, [props.data, props.width, props.height, props.color]); // Re-run only if these dependencies change
 
     return <svg ref={svgRef}></svg>;
 }

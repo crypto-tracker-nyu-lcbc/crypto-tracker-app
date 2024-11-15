@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import {
     select,
     line,
@@ -7,14 +7,17 @@ import {
     scaleTime,
     axisBottom,
     axisLeft,
+    pointer,
+    bisector,
+    timeHour,
 } from "d3";
 
-function LineChartDetail({ id, days, width, height, color }) {
+function LineChartDetail({ id, days, width, height }) {
     const [data, setData] = useState([]);
     const svgRef = useRef();
 
-    // Fetch data from the API (only on component mount)
-    const fetchData = async () => {
+    // Fetch data function memoized to avoid recreation
+    const fetchData = useCallback(async () => {
         try {
             const response = await fetch(
                 `http://localhost:5001/historical-price-chart?id=${id}&days=${days}`
@@ -32,12 +35,12 @@ function LineChartDetail({ id, days, width, height, color }) {
             console.error("Error fetching data:", error);
             setData([]); // Set data to empty array on error
         }
-    };
+    }, [id, days]); // Dependencies for fetchData
 
-    // Fetch data only once on component mount
+    // Fetch data only once or when id/days change
     useEffect(() => {
         fetchData();
-    }, []); // Empty dependency array to fetch only once when the component mounts
+    }, [fetchData]); // Add fetchData as a dependency
 
     useEffect(() => {
         // Check if data is an array and contains elements before rendering
@@ -46,27 +49,28 @@ function LineChartDetail({ id, days, width, height, color }) {
         // Clear any previous SVG elements
         select(svgRef.current).selectAll("*").remove();
 
+        const margin = { top: 30, right: 30, bottom: 30, left: 30 };
         // Set up SVG dimensions
         const svg = select(svgRef.current)
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .attr(
+                "style",
+                "max-width: 100%; height: auto; height: intrinsic; font: 10px sans-serif;"
+            )
+            .style("-webkit-tap-highlight-color", "transparent")
+            .style("overflow", "visible")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`)
+            .on("pointerenter pointermove", pointermoved)
+            .on("pointerleave", pointerleft)
+            .on("touchstart", (event) => event.preventDefault());
 
-        // Define margin and adjusted dimensions
-        const margin = { top: 30, right: 30, bottom: 30, left: 60 };
         const adjustedWidth = width - margin.left - margin.right;
         const adjustedHeight = height - margin.top - margin.bottom;
-
-        // Append a group element for the chart
-        const chartGroup = svg
-            .append("g")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-        // x-axis Hourly data
-
-        const d = new Date(data.at(0).x); // to GMT
-        const to_d = new Date(data.at(-1).x);
-        // Define scales
-        const xScale = scaleTime().domain([d, to_d]).range([0, adjustedWidth]);
+        const color = data.at(-1).y - data.at(0).y > 0 ? "green" : "red";
+        const xScale = scaleTime()
+            .domain([new Date(data.at(0).x), new Date(data.at(-1).x)])
+            .range([0, adjustedWidth + margin.left]);
 
         const yScale = scaleLinear()
             .domain([
@@ -75,40 +79,122 @@ function LineChartDetail({ id, days, width, height, color }) {
             ])
             .range([adjustedHeight, 0]);
 
-        const xAxis = axisBottom().scale(xScale);
+        const xAxis = axisBottom()
+            .ticks(timeHour.every(3), "%I %p")
+            .tickSizeOuter(0)
+            .scale(xScale);
         const yAxis = axisLeft().scale(yScale);
 
-        chartGroup
-            .append("g")
+        svg.append("g")
             .attr("class", "x axis")
-            .attr("transform", `translate(0, ${adjustedHeight})`)
+            .attr("transform", `translate(0,${adjustedHeight})`)
             .call(xAxis);
-
-        chartGroup
-            .append("g")
-            .attr("class", "y axis")
+        svg.append("g")
+            .attr("transform", `translate(${-5},0)`)
             .call(yAxis)
-            .selectAll("text")
-            .style("text-anchor", "end");
+            .call((g) => g.select(".domain").remove())
+            .call((g) =>
+                g
+                    .selectAll(".tick line")
+                    .clone()
+                    .attr("x2", adjustedWidth)
+                    .attr("stroke-opacity", 0.1)
+            )
+            .call((g) =>
+                g
+                    .append("text")
+                    .attr("x", -margin.left)
+                    .attr("y", 10)
+                    .attr("fill", "currentColor")
+            );
 
-        // Line generator
         const myLine = line()
             .x((d) => xScale(d.x))
             .y((d) => yScale(d.y))
             .curve(curveCardinal);
 
-        // Draw the line
-        chartGroup
-            .append("path")
+        svg.append("path")
             .datum(data)
             .attr("class", "line")
             .attr("d", myLine)
             .attr("fill", "none")
-            .attr("stroke", color);
-    }, [data, width, height, color]); // Re-run only if these dependencies change
+            .attr("stroke", color)
+            .style("stroke-width", 1.2);
+
+        const tooltip = svg.append("g");
+
+        function formatValue(value) {
+            return value.toLocaleString("en", {
+                style: "currency",
+                currency: "USD",
+            });
+        }
+
+        function formatDate(date) {
+            let options = {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            };
+            return new Date(date).toLocaleString("en-US", options);
+        }
+
+        const bisect = bisector((d) => d.x).center;
+        function pointermoved(event) {
+            const i = bisect(data, xScale.invert(pointer(event)[0]));
+            tooltip.style("display", null);
+            tooltip.attr(
+                "transform",
+                `translate(${xScale(data[i].x)},${yScale(data[i].y)})`
+            );
+
+            const path = tooltip
+                .selectAll("path")
+                .data([null])
+                .join("path")
+                .attr("fill", "white")
+                .attr("stroke", "black");
+
+            const text = tooltip
+                .selectAll("text")
+                .data([null])
+                .join("text")
+                .call((text) =>
+                    text
+                        .selectAll("tspan")
+                        .data([formatDate(data[i].x), formatValue(data[i].y)])
+                        .join("tspan")
+                        .attr("x", 0)
+                        .attr("y", (_, i) => `${i * 1.1}em`)
+                        .attr("font-weight", (_, i) => (i ? null : "bold"))
+                        .text((d) => d)
+                );
+
+            size(text, path);
+        }
+
+        function pointerleft() {
+            tooltip.style("display", "none");
+        }
+
+        function size(text, path) {
+            const { y, width: w, height: h } = text.node().getBBox();
+            text.attr("transform", `translate(${-w / 2},${y - 20})`);
+            path.attr(
+                "d",
+                `M${-w / 2 - 10},-5H-5l5,5l5,-5H${w / 2 + 10}v-${h + 20}h-${
+                    w + 20
+                }z`
+            );
+        }
+    }, [data, width, height]);
 
     return (
-        <svg ref={svgRef} style={{ float: "right", alignSelf: "center" }}></svg>
+        <div style={{ alignSelf: "center" }}>
+            <svg ref={svgRef}></svg>
+        </div>
     );
 }
 

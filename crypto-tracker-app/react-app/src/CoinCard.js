@@ -1,19 +1,52 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
-import Button from "@mui/material/Button";
-import { CardHeader, Typography } from "@mui/material";
+import { CardHeader, Typography, Divider } from "@mui/material";
 import { Avatar } from "@mui/material";
 import { ArrowDropDown, ArrowDropUp } from "@mui/icons-material";
-import LineChartDetail from "./LineChartDetail";
+import { CustomFormatter } from "./CustomFormatter.js";
+
+function getChangePercentageRow(change_percentage, duration_str) {
+    return (
+        <div
+            className="cardCurrentPrice"
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexDirection: "row",
+                alignItems: "flex-end",
+            }}
+        >
+            <Typography style={{ margin: 0 }}>{duration_str} Change</Typography>
+            {change_percentage > 0 ? (
+                <Typography
+                    style={{
+                        margin: 0,
+                        color: "green",
+                        display: "flex",
+                    }}
+                >
+                    {change_percentage + " %"}
+                    <ArrowDropUp />
+                </Typography>
+            ) : (
+                <Typography
+                    style={{ margin: 0, color: "red", display: "flex" }}
+                >
+                    {change_percentage + " %"}
+                    <ArrowDropDown />
+                </Typography>
+            )}
+        </div>
+    );
+}
 
 function CoinCard(props) {
     const [data, setData] = useState([]);
-    const [isBullish, setBool] = useState(false);
     const [img, setImg] = useState(null);
-    // Fetch data from the API (only on component mount)
-    const fetchData = async () => {
+
+    // Fetch data function memoized to prevent recreation
+    const fetchData = useCallback(async () => {
         try {
             const response = await fetch(
                 `http://localhost:5001/coin-data?id=${props.id}`
@@ -21,16 +54,16 @@ function CoinCard(props) {
             const result = await response.json();
             setData(result);
             setImg(result.image.small);
-            result.price_change_24h < 0 ? setBool(false) : setBool(true);
-            // console.log(data);
         } catch (error) {
             console.error("Error fetching data:", error);
             setData([]); // Set data to empty array on error
         }
-    };
+    }, [props.id]); // Dependency for fetchData
+
+    // Use useEffect to fetch data only once
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]); // Add fetchData as a dependency
 
     return (
         <Card variant="outlined" style={{ flexGrow: 1, height: props.height }}>
@@ -52,41 +85,124 @@ function CoinCard(props) {
                         />
                     }
                     title={data.name}
-                    titleTypographyProps={{ fontSize: "x-large" }}
+                    titleTypographyProps={{
+                        fontSize: "x-large",
+                        fontWeight: 700,
+                    }}
                 />
-                {isBullish ? (
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                    }}
+                >
                     <Typography
-                        sx={{
-                            color: "green",
-                            fontWeight: "700",
-                            display: "flex",
-                        }}
+                        style={{ fontSize: "x-large", margin: "0px 0 20px 0" }}
                     >
                         {"$ " + data.current_price + " USD"}
-                        <ArrowDropUp />
                     </Typography>
-                ) : (
-                    <Typography
-                        sx={{
-                            color: "red",
-                            fontWeight: "700",
-                            display: "flex",
-                        }}
-                    >
-                        {"$ " + data.current_price + " USD"}
-                        <ArrowDropDown />
-                    </Typography>
-                )}
-
-                <Typography variant="body2">
-                    <br />
-                    {'"a benevolent smile"'}
+                </div>
+                <Typography
+                    gutterBottom
+                    sx={{ color: "text.secondary", fontSize: "small" }}
+                >
+                    Price
                 </Typography>
+                {getChangePercentageRow(
+                    data.price_change_percentage_24h,
+                    "24H"
+                )}
+                {getChangePercentageRow(data.price_change_percentage_7d, "7D")}
+                {getChangePercentageRow(
+                    data.price_change_percentage_30d,
+                    "30D"
+                )}
+                <Divider
+                    variant="middle"
+                    component="li"
+                    style={{ listStyle: "none", margin: "10px" }}
+                />
+                <Typography
+                    gutterBottom
+                    sx={{ color: "text.secondary", fontSize: "small" }}
+                >
+                    Market Cap
+                </Typography>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        flexDirection: "row",
+                        alignItems: "flex-end",
+                    }}
+                >
+                    <Typography style={{ margin: 0 }}>Rank</Typography>
+                    <Typography style={{ margin: 0, display: "flex" }}>
+                        {data.market_cap_rank}
+                    </Typography>
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        flexDirection: "row",
+                        alignItems: "flex-end",
+                    }}
+                >
+                    <Typography style={{ margin: 0 }}>Market Cap</Typography>
+                    <Typography style={{ margin: 0, display: "flex" }}>
+                        {CustomFormatter.MarketCapFormatter(
+                            parseFloat(data.market_cap)
+                        )}
+                    </Typography>
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        flexDirection: "row",
+                        alignItems: "flex-end",
+                    }}
+                >
+                    <Typography style={{ margin: 0 }}>24H Change</Typography>
+                    <Typography
+                        style={{
+                            margin: 0,
+                        }}
+                    >
+                        {CustomFormatter.MarketCapFormatter(
+                            parseFloat(data.market_cap_change_24h)
+                        )}
+                    </Typography>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    {data.market_cap_change_percentage_24h > 0 ? (
+                        <Typography
+                            style={{
+                                margin: 0,
+                                color: "green",
+                                display: "flex",
+                                fontSize: "small",
+                            }}
+                        >
+                            {data.market_cap_change_percentage_24h + " %"}
+                        </Typography>
+                    ) : (
+                        <Typography
+                            style={{
+                                margin: 0,
+                                color: "red",
+                                display: "flex",
+                                fontSize: "small",
+                            }}
+                        >
+                            {data.market_cap_change_percentage_24h + " %"}
+                        </Typography>
+                    )}
+                </div>
             </CardContent>
-            <CardActions>
-                <Button size="small">Learn More</Button>
-            </CardActions>
         </Card>
     );
 }
+
 export default CoinCard;

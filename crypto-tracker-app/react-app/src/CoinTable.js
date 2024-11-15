@@ -6,7 +6,7 @@ import { CardHeader, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import LineChart from "./LineChart";
 import { ArrowDropDown, ArrowDropUp } from "@mui/icons-material";
-
+import { CustomFormatter } from "./CustomFormatter";
 const graphWidth = 300;
 const rowHeight = 80;
 
@@ -59,26 +59,7 @@ const columns = [
     {
         field: "market_cap",
         valueGetter: (value) => {
-            if (value > 1000000000) {
-                value /= 1000000000;
-                var val_str = value
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                return "$ " + val_str + " B";
-            } else if (value > 1000000) {
-                value /= 1000000;
-                var val_str = value
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                return "$ " + val_str + " M";
-            } else {
-                var val_str = value
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                return "$ " + val_str;
-            }
+            return CustomFormatter.MarketCapFormatter(value);
         },
         headerName: "Market Cap",
         headerClassName: "cointable-header",
@@ -169,10 +150,10 @@ const columns = [
 
 export default function CoinTable() {
     const [data, setData] = useState([]);
-    const [paginationModel, setPaginationModel] = useState({
-        pageSize: 100,
-        page: 0,
-    });
+    // const [paginationModel, setPaginationModel] = useState({
+    //     pageSize: 100,
+    //     page: 0,
+    // });
     const navigate = useNavigate();
 
     const handleOnRowClick = (params) => {
