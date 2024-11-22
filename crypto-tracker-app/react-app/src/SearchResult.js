@@ -32,7 +32,7 @@ function SearchResult() {
     return (
         <div className="SearchResult" style={{ width: "inherit" }}>
             <Grid spacing={2} container className="card-container">
-                <CoinCard item id={id} />
+                <CoinCard id={id} minWidth={250} />
                 <Card
                     style={{
                         flexGrow: 1,
@@ -47,8 +47,8 @@ function SearchResult() {
                         id={id}
                         days="1"
                         width={
-                            windowSize.width < "570"
-                                ? windowSize.width * 0.7
+                            windowSize.width < "1026"
+                                ? windowSize.width * 0.75
                                 : windowSize.width * 0.5
                         }
                         height={300}

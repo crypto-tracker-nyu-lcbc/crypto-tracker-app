@@ -29,7 +29,9 @@ function LineChartDetail({ id, days, width, height }) {
                 setData(result);
             } else {
                 console.error("Unexpected data format:", result);
-                setData([]); // Fallback to empty array
+                setTimeout(() => {
+                    fetchData();
+                }, 1000);
             }
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -49,7 +51,8 @@ function LineChartDetail({ id, days, width, height }) {
         // Clear any previous SVG elements
         select(svgRef.current).selectAll("*").remove();
 
-        const margin = { top: 30, right: 30, bottom: 30, left: 30 };
+        const margin = { top: 10, right: 10, bottom: 10, left: 10 };
+        const yAxisShift = 20;
         // Set up SVG dimensions
         const svg = select(svgRef.current)
             .attr("width", width)
@@ -60,7 +63,10 @@ function LineChartDetail({ id, days, width, height }) {
             )
             .style("-webkit-tap-highlight-color", "transparent")
             .style("overflow", "visible")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`)
+            .attr(
+                "transform",
+                `translate(${margin.left + yAxisShift}, ${margin.top})`
+            )
             .on("pointerenter pointermove", pointermoved)
             .on("pointerleave", pointerleft)
             .on("touchstart", (event) => event.preventDefault());
@@ -90,22 +96,15 @@ function LineChartDetail({ id, days, width, height }) {
             .attr("transform", `translate(0,${adjustedHeight})`)
             .call(xAxis);
         svg.append("g")
-            .attr("transform", `translate(${-5},0)`)
+            .attr("transform", `translate(0,0)`)
             .call(yAxis)
             .call((g) => g.select(".domain").remove())
             .call((g) =>
                 g
                     .selectAll(".tick line")
                     .clone()
-                    .attr("x2", adjustedWidth)
+                    .attr("x2", adjustedWidth + margin.left)
                     .attr("stroke-opacity", 0.1)
-            )
-            .call((g) =>
-                g
-                    .append("text")
-                    .attr("x", -margin.left)
-                    .attr("y", 10)
-                    .attr("fill", "currentColor")
             );
 
         const myLine = line()

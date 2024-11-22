@@ -56,7 +56,9 @@ function CoinCard(props) {
             setImg(result.image.small);
         } catch (error) {
             console.error("Error fetching data:", error);
-            setData([]); // Set data to empty array on error
+            setTimeout(() => {
+                fetchData();
+            }, 1000);
         }
     }, [props.id]); // Dependency for fetchData
 
@@ -66,7 +68,10 @@ function CoinCard(props) {
     }, [fetchData]); // Add fetchData as a dependency
 
     return (
-        <Card variant="outlined" style={{ flexGrow: 1, height: props.height }}>
+        <Card
+            variant="outlined"
+            style={{ flexGrow: 1, minWidth: props.minWidth }}
+        >
             <CardContent>
                 <Typography
                     gutterBottom
@@ -99,7 +104,9 @@ function CoinCard(props) {
                     <Typography
                         style={{ fontSize: "x-large", margin: "0px 0 20px 0" }}
                     >
-                        {"$ " + data.current_price + " USD"}
+                        {CustomFormatter.MarketCapFormatter(
+                            parseFloat(data.current_price)
+                        ) + " USD"}
                     </Typography>
                 </div>
                 <Typography

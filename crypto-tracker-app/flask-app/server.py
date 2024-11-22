@@ -3,17 +3,14 @@
 
 from flask import Flask, request, jsonify
 import time
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import requests
 import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
-
-@app.route("/time")
-def getTime():
-    return {"time": time.time()}
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 COIN_GECKO_KEY = os.environ["COIN_GECKO_KEY"]
 NEWS_KEY = os.environ["NEWS_KEY"]
@@ -35,42 +32,46 @@ def hello():
     return response.text
 
 @app.route("/cointable")
+@cross_origin()
 def coinTable():
     # How to use right now: localhost:5001/cointable
-    response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
-                           params={
-                                "x_cg_demo_api_key":COIN_GECKO_KEY,
-                                "vs_currency":"usd",
-                                "order": "market_cap_desc",
-                                "per_page": 100,
-                                "page": 1,
-                                # include sparkline 7 days data
-                                "sparkline": "true",
-                                "price_change_percentage": "24h",
-                                "locale": "en",
-                           }, headers={"accept": "application/json"})
-    
-    coinTableData = []
-    for i, item in enumerate(response.json()):
-        price_7days = item.get("sparkline_in_7d").get("price")
-        price_change_7days = (price_7days[-1] - price_7days[0]) / price_7days[0]
-        coinTableData.append({
-            "id": item.get("id"),
-            "rank": i + 1,
-            "coin": {
-                "name": item.get("name"),
-                "image": item.get("image"),
-                "symbol": item.get("symbol"),
-            },
-            # "high_24h": item.get("high")
-            "current_price": item.get("current_price"),
-            "market_cap": item.get("market_cap"),
-            "market_cap_change_percentage_24h": item.get("market_cap_change_percentage_24h"),
-            "price_change_percentage_24h": item.get("price_change_percentage_24h"),
-            "price_change_percentage_7d": rf"{price_change_7days * 100:.5f}%",
-            "sparkline": [{"x": i + 1, "y": price} for i, price in enumerate(price_7days)] ,
-        })
-    return coinTableData
+    try:
+        response = requests.get(f"https://api.coingecko.com/api/v3/coins/markets",
+                            params={
+                                    "x_cg_demo_api_key":COIN_GECKO_KEY,
+                                    "vs_currency":"usd",
+                                    "order": "market_cap_desc",
+                                    "per_page": 100,
+                                    "page": 1,
+                                    # include sparkline 7 days data
+                                    "sparkline": "true",
+                                    "price_change_percentage": "24h",
+                                    "locale": "en",
+                            }, headers={"accept": "application/json"})
+        
+        coinTableData = []
+        for i, item in enumerate(response.json()):
+            price_7days = item.get("sparkline_in_7d").get("price")
+            price_change_7days = (price_7days[-1] - price_7days[0]) / price_7days[0]
+            coinTableData.append({
+                "id": item.get("id"),
+                "rank": i + 1,
+                "coin": {
+                    "name": item.get("name"),
+                    "image": item.get("image"),
+                    "symbol": item.get("symbol"),
+                },
+                "current_price": item.get("current_price"),
+                "market_cap": item.get("market_cap"),
+                "market_cap_change_percentage_24h": item.get("market_cap_change_percentage_24h"),
+                "price_change_percentage_24h": item.get("price_change_percentage_24h"),
+                "price_change_percentage_7d": rf"{price_change_7days * 100:.5f}%",
+                "sparkline": [{"x": i + 1, "y": price} for i, price in enumerate(price_7days)] ,
+            })
+        return coinTableData, 200
+    except requests.RequestException as e:
+        return jsonify({"error": "Unable to fetch data from CoinGecko"}), 500
+   
 
 @app.route("/list")
 def list():
@@ -131,8 +132,9 @@ def trends():
     return response.text
 
 
-@app.route('/historical-price-chart', methods=['GET'])
-def historical_price_chart():
+@app.route('/price-chart', methods=['GET'])
+@cross_origin()
+def priceChartData():
     """Query historical data api"""
 
     # How to use right now: localhost:5001/historical-price-chart?id=<VALID COIN ID>&days=<# OF DAYS>
@@ -142,7 +144,6 @@ def historical_price_chart():
 
     id = request.args.get('id')
     num_days = request.args.get('days', 7)  # Default to 7 days if 'days' parameter is not provided
-    # Validate or parse days, and ensure it’s a positive integer
     try:
         num_days = int(num_days)
         if num_days <= 0:
@@ -153,7 +154,6 @@ def historical_price_chart():
     today_UNIX = int(today_time.timestamp()) 
     from_time = today_time - timedelta(hours=(24 * num_days))
     from_UNIX = int(from_time.timestamp()) 
-    # Query CoinGecko API
     try:
         response = requests.get(
             f"https://api.coingecko.com/api/v3/coins/{id}/market_chart/range",
@@ -165,15 +165,14 @@ def historical_price_chart():
             },
             headers={"accept": "application/json"}
         )
-        response.raise_for_status()
     except requests.RequestException as e:
-        return jsonify({"error": "Unable to fetch data from CoinGecko"}), 500
+        return jsonify({f"error": "Unable to fetch data from CoinGecko: {e}"}), 500
 
     try:
         prices = response.json().get("prices", [])
         chart_data = [{"x": price[0], "y": price[1]} for price in prices]
     except (ValueError, KeyError) as e:
-        return jsonify({"error": "Error processing data"}), 500
+        return jsonify({f"error": "Error processing data: {e}"}), 500
     
     return jsonify(chart_data), 200
 
@@ -220,25 +219,30 @@ def coinData():
 def news():
     """Query news api"""
 
-    # How to use right now: localhost:5001/news?search=<VALID COIN ID>
+    # How to use right now: localhost:5001/news?search=<COIN Name>
 
     # TODO: how are we deciding on from and to dates? inputs from user on frontend?
     # datetime conversion?
     # sortby option? check documentation...
 
     search = request.args.get('search')
-
+    print(search)
+    today = datetime.now() - timedelta(days=1)
+    todayDate = today.split('T')[0]
     response = requests.get("https://newsapi.org/v2/everything",
                             params={
-                                "q":search,
+                                "q": search,
                                 # "from":"2024-10-26",
                                 # "to":"2024-10-26",
-                                "sortBy":"popularity",
-                                "apiKey":NEWS_KEY
+                                "language":"en",
+                                # "from": today.isoformat(),
+                                "sortBy": "popularity",
+                                "pageSize": 9,
+                                "apiKey": "f663499b1a764142b84c6daf5e950fcf",
                             },
                             headers={"accept": "application/json"})
 
-    return response.text
+    return todayDate +'\n' + response.text
 
 # TODO: populate database
 # TODO: account crud
