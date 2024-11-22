@@ -166,13 +166,13 @@ def priceChartData():
             headers={"accept": "application/json"}
         )
     except requests.RequestException as e:
-        return jsonify({f"error": "Unable to fetch data from CoinGecko: {e}"}), 500
+        return jsonify({"error": f"Unable to fetch data from CoinGecko: {e}"}), 500
 
     try:
         prices = response.json().get("prices", [])
         chart_data = [{"x": price[0], "y": price[1]} for price in prices]
     except (ValueError, KeyError) as e:
-        return jsonify({f"error": "Error processing data: {e}"}), 500
+        return jsonify({"error": f"Error processing data: {e}"}), 500
     
     return jsonify(chart_data), 200
 
