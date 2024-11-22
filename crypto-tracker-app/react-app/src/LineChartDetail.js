@@ -20,7 +20,7 @@ function LineChartDetail({ id, days, width, height }) {
     const fetchData = useCallback(async () => {
         try {
             const response = await fetch(
-                `http://localhost:5001/historical-price-chart?id=${id}&days=${days}`
+                `http://localhost:5001/price-chart?id=${id}&days=${days}`
             );
             const result = await response.json();
 
